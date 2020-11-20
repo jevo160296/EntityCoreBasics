@@ -6,7 +6,7 @@ using System.Runtime.CompilerServices;
 namespace JevoGastosCore
 {
     public abstract class DAO<T, DataContext, DataContainer>:INotifyPropertyChanged
-        where T : class
+        where T : class,INotifyPropertyChanged
         where DataContainer : EntityCoreBasics.Container<DataContext>
         where DataContext : DbContext
     {
@@ -27,5 +27,29 @@ namespace JevoGastosCore
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
+        #region Notificaciones
+        protected virtual void Items_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
+            switch (e.Action)
+            {
+                case System.Collections.Specialized.NotifyCollectionChangedAction.Add:
+                    foreach (T item in e.NewItems)
+                    {
+                        item.PropertyChanged += Item_PropertyChanged;
+                    }
+                    break;
+                case System.Collections.Specialized.NotifyCollectionChangedAction.Remove:
+                    foreach (T item in e.OldItems)
+                    {
+                        item.PropertyChanged -= Item_PropertyChanged;
+                    }
+                    break;
+            }
+        }
+        protected virtual void Item_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            OnPropertyChanged(e.PropertyName);
+        }
+        #endregion
     }
 }
